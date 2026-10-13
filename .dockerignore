@@ -1,0 +1,16 @@
+.git
+.venv
+.env
+.env.*
+!.env.production.example
+backup.env
+/brand
+.superpowers
+.pytest_cache
+.ruff_cache
+**/__pycache__
+media
+staticfiles
+static/dist
+frontend/node_modules
+docs/superpowers

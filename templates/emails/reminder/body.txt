@@ -1,0 +1,11 @@
+{% autoescape off %}Hi {{ name }},
+
+A reminder about your upcoming shift. A calendar invite is attached.
+
+{% include "emails/_shift.txt" %}
+
+Can't make it? Cancel here: {{ registration_url }}
+
+—
+{{ site_settings.org_name }}{% if site_settings.contact_email %} · {{ site_settings.contact_email }}{% endif %}
+{{ site_url }}{% endautoescape %}

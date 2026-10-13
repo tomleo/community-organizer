@@ -1,0 +1,1 @@
+{% autoescape off %}You're on the waitlist: {{ position.title }}{% endautoescape %}

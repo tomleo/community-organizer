@@ -1,0 +1,21 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Site settings{% endblock head_title %}
+{% block content %}
+  <h1>Site settings</h1>
+  <div class="alert {% if backup_status.warning %}alert-warning{% else %}alert-light border{% endif %}">
+    <strong>Backups:</strong>
+    {% if backup_status.text %}{{ backup_status.text }}{% endif %}
+    {% if backup_status.last_ok %}Last successful backup: {{ backup_status.last_ok|date:"M j, g:i A" }}.{% endif %}
+  </div>
+  <form method="post" enctype="multipart/form-data" class="app-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for title, fields in form.sections %}
+      <fieldset class="mb-4">
+        <legend class="h5">{{ title }}</legend>
+        {% for field in fields %}<div class="mb-3">{{ field.as_field_group }}</div>{% endfor %}
+      </fieldset>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Save settings</button>
+  </form>
+{% endblock content %}

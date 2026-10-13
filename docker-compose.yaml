@@ -1,0 +1,160 @@
+# Community Organizer — production stack. Configure it in .env (see .env.production.example), then:
+#   docker compose up -d
+# Update:   docker compose pull && docker compose up -d
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-app: &app
+  image: ${IMAGE:?Set IMAGE in .env}:${VERSION:-1}
+  env_file: ${APP_ENV_FILE:-.env}
+  restart: unless-stopped
+  logging: *logging
+  environment:
+    DATABASE_URL: postgres://organizer:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/organizer
+    VALKEY_CACHE_URL: redis://valkey:6379/1
+    VALKEY_BROKER_URL: redis://valkey:6379/0
+    CUSTOM_TEMPLATES_DIR: /custom-templates
+  volumes:
+    - media:/app/media
+    # Django reads the static-files manifest (hashed names) that setup writes here.
+    - static:/app/staticfiles:ro
+    - ./templates:/custom-templates:ro
+
+x-after-setup: &after-setup
+  setup:
+    condition: service_completed_successfully
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+    volumes:
+      - static:/srv/static:ro
+      - media:/srv/media:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+
+  setup:
+    <<: *app
+    command: setup
+    restart: "no"
+    volumes:
+      - media:/app/media
+      - static:/app/staticfiles
+      - ./templates:/custom-templates:ro
+      - ./brand:/app/brand:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+
+  web:
+    <<: *app
+    command: web
+    depends_on: *after-setup
+    healthcheck:
+      test: ["CMD", "/app/docker/entrypoint.sh", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  worker:
+    <<: *app
+    command: worker
+    depends_on: *after-setup
+
+  beat:
+    <<: *app
+    command: beat
+    depends_on: *after-setup
+
+  backup:
+    <<: *app
+    command: backup
+    # Only this service gets the backup credentials (they can delete off-site snapshots).
+    env_file:
+      - path: ${APP_ENV_FILE:-.env}
+      - path: ${BACKUP_ENV_FILE:-backup.env}
+        required: false
+    depends_on: *after-setup
+
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    logging: *logging
+    command: ["postgres", "-c", "shared_buffers=512MB"]
+    environment:
+      POSTGRES_USER: organizer
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: organizer
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "organizer"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:9.1-alpine
+    restart: unless-stopped
+    logging: *logging
+    command: ["valkey-server", "--save", "60", "1"]
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+configs:
+  caddyfile:
+    content: |
+      ${SITE_URL:?Set SITE_URL in .env} {
+        encode zstd gzip
+        # Several photos (up to 10 MB each) can be uploaded in one form.
+        request_body {
+          max_size 110MB
+        }
+        handle_path /static/* {
+          root * /srv/static
+          header Cache-Control "public, max-age=31536000, immutable"
+          file_server
+        }
+        handle_path /media/* {
+          root * /srv/media
+          header Cache-Control "public, max-age=86400"
+          header X-Content-Type-Options nosniff
+          file_server
+        }
+        handle {
+          reverse_proxy web:8000
+        }
+        log
+      }
+
+volumes:
+  postgres-data:
+  valkey-data:
+  media:
+  static:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,64 @@
+{% extends "manage/base.html" %}
+{% load volunteer_tags %}
+{% block head_title %}Volunteers{% endblock head_title %}
+{% block content %}
+  <h1>Volunteers</h1>
+  <form method="get" class="row g-2 mb-3" role="search">
+    <div class="col-sm-4"><input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Name, email or phone" aria-label="Search"></div>
+    <div class="col-sm-2">
+      <select name="role" class="form-select" aria-label="Role">
+        <option value="">All roles</option>
+        {% for value, label in roles %}<option value="{{ value }}"{% if value == role %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-2">
+      <select name="sort" class="form-select" aria-label="Sort">
+        {% for name in sorts %}<option value="{{ name }}"{% if name == sort %} selected{% endif %}>Sort by {{ name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-auto form-check align-self-center ms-2">
+      <input class="form-check-input" type="checkbox" name="upcoming" value="1" id="upcoming"{% if upcoming %} checked{% endif %}>
+      <label class="form-check-label" for="upcoming">Has an upcoming shift</label>
+    </div>
+    {% for question, choice in question_filters %}
+      <div class="col-sm-2">
+        <select name="q_{{ question.pk }}" class="form-select" aria-label="{{ question.label }}">
+          <option value="">{{ question.label }}: any</option>
+          <option value="yes"{% if choice == "yes" %} selected{% endif %}>{{ question.label }}: yes</option>
+          <option value="no"{% if choice == "no" %} selected{% endif %}>{{ question.label }}: no</option>
+        </select>
+      </div>
+    {% endfor %}
+    <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
+  </form>
+  {% if volunteers %}
+    <form method="get" id="selection">
+      <div class="table-responsive"><table class="table align-middle">
+        <thead><tr><th><span class="visually-hidden">Select</span></th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th class="text-end">Hours</th><th class="text-end">Attended</th><th>Last shift</th><th>Joined</th></tr></thead>
+        <tbody>
+          {% for person in volunteers %}
+            <tr>
+              <td><input class="form-check-input" type="checkbox" name="ids" value="{{ person.pk }}" aria-label="Select {{ person.email }}"></td>
+              <td><a href="{% url 'manage_volunteer' person.pk %}">{{ person.profile.full_name|default:person.email }}</a></td>
+              <td>{{ person.email }}{% if person.profile.email_undeliverable_at %} <span title="{{ person.profile.email_undeliverable_reason }}">⚠</span>{% endif %}</td>
+              <td>{{ person.profile.phone|default:"—" }}</td>
+              <td>{{ person.role_label }}</td>
+              <td class="text-end">{{ person.hours|hours }}</td>
+              <td class="text-end">{{ person.attended_count }}</td>
+              <td>{{ person.last_shift_at|date:"M j, Y"|default:"—" }}</td>
+              <td>{{ person.date_joined|date:"M j, Y" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+      <div class="d-flex flex-wrap gap-2" id="selection-actions">
+        {% if perms.notifications.add_message %}<button type="submit" class="btn btn-primary" formaction="{% url 'manage_message_new' %}">Email selected</button>{% endif %}
+        <button type="submit" class="btn btn-outline-secondary" formaction="{% url 'manage_volunteers_export' %}">Export selected (CSV)</button>
+        <a class="btn btn-outline-secondary" href="{% url 'manage_volunteers_export' %}?{{ query }}">Export all matching (CSV)</a>
+      </div>
+    </form>
+    {% include "events/_pagination.html" %}
+  {% else %}
+    <p class="text-body-secondary">No volunteers match.</p>
+  {% endif %}
+{% endblock content %}

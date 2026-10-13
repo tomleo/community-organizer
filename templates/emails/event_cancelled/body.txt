@@ -1,0 +1,11 @@
+{% autoescape off %}Hi {{ name }},
+
+Unfortunately {{ event.title }} has been cancelled. You don't need to do anything.
+
+{% include "emails/_shift.txt" %}
+
+View the event: {{ event_url }}
+
+—
+{{ site_settings.org_name }}{% if site_settings.contact_email %} · {{ site_settings.contact_email }}{% endif %}
+{{ site_url }}{% endautoescape %}

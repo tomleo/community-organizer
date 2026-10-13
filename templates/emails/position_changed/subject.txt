@@ -1,0 +1,1 @@
+{% autoescape off %}Changed: {{ position.title }} · {{ event.title }}{% endautoescape %}

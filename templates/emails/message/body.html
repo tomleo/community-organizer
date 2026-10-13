@@ -1,0 +1,6 @@
+{% extends "emails/base.html" %}
+{% block content %}
+  <p>Hi {{ name }},</p>
+  {{ message.body|linebreaks }}
+  <p>— {% if sender_name %}{{ sender_name }}, {% endif %}{{ site_settings.org_name }}</p>
+{% endblock %}

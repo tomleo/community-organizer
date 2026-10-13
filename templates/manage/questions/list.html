@@ -1,0 +1,38 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Profile questions{% endblock head_title %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Profile questions</h1>
+    {% if perms.accounts.add_profilequestion %}<a class="btn btn-primary" href="{% url 'manage_question_new' %}">New question</a>{% endif %}
+  </div>
+  <p class="text-body-secondary">Yes/no questions volunteers answer on their profile. Questions that also ask about guests appear on each guest row when registering.</p>
+  {% if questions %}
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Question</th><th>Asks about guests</th><th></th></tr></thead>
+      <tbody>
+        {% for question in questions %}
+          <tr>
+            <td>{{ question.label }}{% if question.help_text %}<br><span class="small text-body-secondary">{{ question.help_text }}</span>{% endif %}</td>
+            <td>{{ question.ask_guests|yesno:"Yes,No" }}</td>
+            <td class="text-end text-nowrap">
+              <form method="post" action="{% url 'manage_question_move' question.pk 'up' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary" {% if forloop.first %}disabled{% endif %} aria-label="Move up">↑</button></form>
+              <form method="post" action="{% url 'manage_question_move' question.pk 'down' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary" {% if forloop.last %}disabled{% endif %} aria-label="Move down">↓</button></form>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'manage_question_edit' question.pk %}">Edit</a>
+              <form method="post" action="{% url 'manage_question_archive' question.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-danger">Archive</button></form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  {% else %}
+    <p class="text-body-secondary">No questions yet.</p>
+  {% endif %}
+  {% if archived %}
+    <h2 class="h5 mt-4">Archived</h2>
+    <ul class="list-unstyled">
+      {% for question in archived %}
+        <li class="mb-1">{{ question.label }} <form method="post" action="{% url 'manage_question_restore' question.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-link">Restore</button></form></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock content %}

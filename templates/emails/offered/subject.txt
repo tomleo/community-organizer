@@ -1,0 +1,1 @@
+{% autoescape off %}A spot opened up: {{ position.title }}{% endautoescape %}

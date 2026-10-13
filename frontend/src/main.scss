@@ -1,0 +1,43 @@
+@import "brand";
+@import "bootstrap/scss/bootstrap";
+
+// Bootstrap styling for forms rendered by Django ({{ form }}) and allauth.
+.app-form {
+  max-width: 36rem;
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  textarea {
+    @extend .form-control;
+  }
+
+  select {
+    @extend .form-select;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    @extend .form-check-input;
+    margin-right: 0.5rem;
+  }
+
+  label {
+    @extend .form-label;
+  }
+
+  .helptext {
+    @extend .form-text;
+    display: block;
+  }
+
+  .errorlist {
+    @extend .list-unstyled;
+    @extend .text-danger;
+    @extend .small;
+    margin-bottom: 0.25rem;
+  }
+
+  > div,
+  > p {
+    margin-bottom: 1rem;
+  }
+}

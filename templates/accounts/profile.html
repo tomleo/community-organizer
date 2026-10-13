@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load image_tags %}
+{% block head_title %}Your profile{% endblock head_title %}
+{% block content %}
+  {% with profile=user.profile %}
+    <div class="d-flex align-items-center gap-3 mb-4">
+      {% if profile.photo %}
+        <img src="{% resized_url profile.photo 128 %}" alt="" class="rounded-circle" width="96" height="96" style="object-fit: cover">
+      {% endif %}
+      <div>
+        <h1 class="mb-0">{{ profile.full_name|default:user.email }}</h1>
+        <div class="text-body-secondary">{{ user.email }}</div>
+        {% load volunteer_tags %}{% if stats.attended_count %}<div class="small">{{ stats.hours|hours }} hours · {{ stats.attended_count }} shift{{ stats.attended_count|pluralize }} attended</div>{% endif %}
+      </div>
+    </div>
+    <dl class="row">
+      <dt class="col-sm-3">Phone</dt><dd class="col-sm-9">{{ profile.phone|default:"—" }}</dd>
+      <dt class="col-sm-3">Date of birth</dt><dd class="col-sm-9">{{ profile.date_of_birth|date:"F j, Y"|default:"—" }}</dd>
+      <dt class="col-sm-3">Address</dt>
+      <dd class="col-sm-9">
+        {% if profile.address_line1 %}
+          {{ profile.address_line1 }}{% if profile.address_line2 %}, {{ profile.address_line2 }}{% endif %}<br>
+          {{ profile.city }} {{ profile.region }} {{ profile.postal_code }}<br>{{ profile.country }}
+        {% else %}—{% endif %}
+      </dd>
+    </dl>
+    <a class="btn btn-primary" href="{% url 'profile_edit' %}">Edit profile</a>
+    <a class="btn btn-link text-danger" href="{% url 'account_delete' %}">Delete my account</a>
+    {% include "registrations/_profile_sections.html" %}
+  {% endwith %}
+{% endblock content %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load event_tags %}
+{% block head_title %}Register · {{ position.title }}{% endblock head_title %}
+{% block content %}
+  <p><a href="{{ event.get_absolute_url }}">← {{ event.title }}</a></p>
+  <h1>{{ position.title }}</h1>
+  <p class="lead mb-1">{{ position.starts_at|date_range:position.ends_at }}</p>
+  <p>{{ position.effective_location.name }}</p>
+  {% if available > 0 %}
+    <div class="alert alert-success">You'll be registered. {{ available }} spot{{ available|pluralize }} left.</div>
+  {% else %}
+    <div class="alert alert-warning">This position is full — you'll join the waitlist as #{{ next_waitlist_place }}.</div>
+  {% endif %}
+  <form method="post" class="app-form">
+    {% csrf_token %}
+    {{ form }}
+    {% include "registrations/_guest_rows.html" with formset=form.guest_formset %}
+    <button type="submit" class="btn btn-primary">{% if available > 0 %}Register{% else %}Join waitlist{% endif %}</button>
+  </form>
+{% endblock content %}

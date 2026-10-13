@@ -1,0 +1,11 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Remove registration{% endblock head_title %}
+{% block content %}
+  <h1>Remove {{ registration.volunteer.email }}?</h1>
+  <p>{{ registration.position.title }} · {{ registration.position.event.title }} ({{ registration.get_status_display }})</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Remove</button>
+    <a class="btn btn-link" href="{% url 'manage_roster' registration.position_id %}">Cancel</a>
+  </form>
+{% endblock content %}

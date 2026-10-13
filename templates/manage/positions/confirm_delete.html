@@ -1,0 +1,10 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Delete position{% endblock head_title %}
+{% block content %}
+  <h1>Delete {{ object.title }}?</h1>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Delete position</button>
+    <a class="btn btn-link" href="{% url 'manage_event' object.event_id %}">Cancel</a>
+  </form>
+{% endblock content %}

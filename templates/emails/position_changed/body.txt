@@ -1,0 +1,11 @@
+{% autoescape off %}Hi {{ name }},
+
+The details of your shift have changed. It was: {{ old_when }} at {{ old_location }}. The new details are below.
+
+{% include "emails/_shift.txt" %}
+
+Manage your registration: {{ registration_url }}
+
+—
+{{ site_settings.org_name }}{% if site_settings.contact_email %} · {{ site_settings.contact_email }}{% endif %}
+{{ site_url }}{% endautoescape %}

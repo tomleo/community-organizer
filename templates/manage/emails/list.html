@@ -1,0 +1,35 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Email log{% endblock head_title %}
+{% block content %}
+  <h1>Email log</h1>
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-sm-4"><input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Recipient email" aria-label="Recipient email"></div>
+    <div class="col-sm-3">
+      <select name="status" class="form-select" aria-label="Status">
+        <option value="">All statuses</option>
+        {% for value, label in statuses %}<option value="{{ value }}"{% if value == status %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
+  </form>
+  {% if emails %}
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Created</th><th>Recipient</th><th>Kind</th><th>Subject</th><th>Status</th><th>Error</th></tr></thead>
+      <tbody>
+        {% for email in emails %}
+          <tr>
+            <td class="text-nowrap">{{ email.created_at|date:"M j, g:i A" }}</td>
+            <td>{{ email.to }}</td>
+            <td>{{ email.get_kind_display }}</td>
+            <td><a href="{% url 'manage_email' email.pk %}">{{ email.subject }}</a></td>
+            <td>{{ email.get_status_display }}</td>
+            <td class="small">{{ email.error|truncatechars:80 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% include "events/_pagination.html" %}
+  {% else %}
+    <p class="text-body-secondary">No emails match.</p>
+  {% endif %}
+{% endblock content %}

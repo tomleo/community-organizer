@@ -1,0 +1,1 @@
+{% autoescape off %}Your offer for {{ position.title }} expired{% endautoescape %}

@@ -1,0 +1,13 @@
+{% extends "emails/base.html" %}
+{% block content %}
+  <p>Hi {{ name }},</p>
+  {% if digest.activity %}
+    <p><strong>Changes in the last 24 hours</strong></p>
+    <ul>{% for row in digest.activity %}<li>{{ row.position.event.title }} · {{ row.position.title }}: {{ row.volunteer }} — {{ row.change }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if digest.underfilled %}
+    <p><strong>Shifts in the next 48 hours that still need people</strong></p>
+    <ul>{% for row in digest.underfilled %}<li>{{ row.position.event.title }} · {{ row.position.title }}: {{ row.open }} open</li>{% endfor %}</ul>
+  {% endif %}
+  <p><a href="{{ manage_url }}">Manage events</a></p>
+{% endblock %}

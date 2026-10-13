@@ -1,0 +1,12 @@
+{% extends "manage/base.html" %}
+{% block head_title %}{% if object %}Edit event{% else %}New event{% endif %}{% endblock head_title %}
+{% block content %}
+  <h1>{% if object %}Edit {{ object.title }}{% else %}New event{% endif %}</h1>
+  <form method="post" class="app-form">
+    {% csrf_token %}
+    {{ form }}
+    <p class="small"><a href="{% url 'manage_location_new' %}" target="_blank">Add a new location</a> (opens in a new tab; reload this page afterwards)</p>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a class="btn btn-link" href="{% if object %}{% url 'manage_event' object.pk %}{% else %}{% url 'manage_events' %}{% endif %}">Cancel</a>
+  </form>
+{% endblock content %}

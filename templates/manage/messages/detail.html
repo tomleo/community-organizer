@@ -1,0 +1,13 @@
+{% extends "manage/base.html" %}
+{% block head_title %}{{ sent_message.subject }}{% endblock head_title %}
+{% block content %}
+  <p><a href="{% url 'manage_messages' %}">← Messages</a></p>
+  <h1 class="h3">{{ sent_message.subject }}</h1>
+  <p class="text-body-secondary">{{ sent_message.created_at|date:"M j, Y g:i A" }} · {{ sent_message.audience }} · {{ sent_message.recipient_count }} recipient{{ sent_message.recipient_count|pluralize }}{% if sent_message.skipped_count %}, {{ sent_message.skipped_count }} skipped{% endif %}</p>
+  <div class="card mb-4"><div class="card-body">{{ sent_message.body|linebreaks }}</div></div>
+  <h2 class="h5">Delivery</h2>
+  <table class="table">
+    <thead><tr><th>Recipient</th><th>Status</th></tr></thead>
+    <tbody>{% for email in emails %}<tr><td>{{ email.to }}</td><td>{{ email.get_status_display }}</td></tr>{% empty %}<tr><td colspan="2" class="text-body-secondary">Queued — refresh in a moment.</td></tr>{% endfor %}</tbody>
+  </table>
+{% endblock content %}

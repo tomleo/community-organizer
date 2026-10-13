@@ -1,0 +1,11 @@
+{% autoescape off %}Hi {{ name }},
+
+This shift is full, so you're #{{ place }} on the waitlist. If a spot opens up we'll email you an offer.
+
+{% include "emails/_shift.txt" %}
+
+Manage your registration: {{ registration_url }}
+
+—
+{{ site_settings.org_name }}{% if site_settings.contact_email %} · {{ site_settings.contact_email }}{% endif %}
+{{ site_url }}{% endautoescape %}

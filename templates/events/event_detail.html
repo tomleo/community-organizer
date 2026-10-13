@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load image_tags event_tags richtext_tags %}
+{% block head_title %}{{ event.title }}{% endblock head_title %}
+{% block extra_head %}{{ jsonld }}{% endblock extra_head %}
+{% block content %}
+  {% if event.is_archived %}
+    <div class="alert alert-secondary">Archived — not visible to the public.</div>
+  {% elif event.status == "draft" %}
+    <div class="alert alert-warning">Draft — not visible to the public.</div>
+  {% endif %}
+  {% if event.status == "cancelled" %}
+    <div class="alert alert-danger">This event has been cancelled.</div>
+  {% endif %}
+  {% if can_edit %}<p><a class="btn btn-sm btn-outline-secondary" href="{% url 'manage_event' event.pk %}">Edit</a></p>{% endif %}
+
+  {% with photos=event.photos.all %}
+    {% if photos %}
+      <div id="event-photos" class="carousel slide mb-4" style="max-width: 900px">
+        <div class="carousel-inner rounded">
+          {% for photo in photos %}
+            <div class="carousel-item{% if forloop.first %} active{% endif %}">
+              <img class="d-block w-100" style="aspect-ratio: 16 / 9; object-fit: cover" alt=""
+                   src="{% resized_url photo.image 1600 %}"
+                   srcset="{% resized_url photo.image 800 %} 800w, {% resized_url photo.image 1600 %} 1600w"
+                   sizes="(max-width: 900px) 100vw, 900px">
+            </div>
+          {% endfor %}
+        </div>
+        {% if photos|length > 1 %}
+          <button class="carousel-control-prev" type="button" data-bs-target="#event-photos" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#event-photos" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Next</span>
+          </button>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <h1>{{ event.title }}{% if event.status == "cancelled" %} <span class="badge text-bg-danger align-middle fs-6">Cancelled</span>{% endif %}</h1>
+  <p class="lead mb-1">{{ event.starts_at|date_range:event.ends_at }}</p>
+  {% with place=event.location %}
+    <p class="mb-3">
+      <strong>{{ place.name }}</strong><br>
+      {{ place.address_line1 }}{% if place.address_line2 %}, {{ place.address_line2 }}{% endif %}, {{ place.city }}, {{ place.region }} {{ place.postal_code }}
+      {% if place.map_url %}<br><a href="{{ place.map_url }}" rel="noopener noreferrer" target="_blank">Directions</a>{% endif %}
+      {% if place.notes %}<br><span class="text-body-secondary">{{ place.notes|linebreaksbr }}</span>{% endif %}
+    </p>
+  {% endwith %}
+  <div class="mb-3">{{ event.description|rich_text }}</div>
+  {% if event.resources_url %}<p><a href="{{ event.resources_url }}" rel="noopener noreferrer" target="_blank">Resources for volunteers</a></p>{% endif %}
+
+  <h2 class="h4 mt-4">Positions</h2>
+  {% for day, positions in position_days %}
+    <h3 class="h6 text-uppercase text-body-secondary mt-3">{{ day|date:"l, F j, Y" }}</h3>
+    <div class="list-group mb-3">
+      {% for position in positions %}
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between flex-wrap gap-2">
+            <strong>{{ position.title }}</strong>
+            <span>{{ position.starts_at|time_range:position.ends_at }}</span>
+          </div>
+          {% if position.location %}<div class="text-body-secondary small">At {{ position.location.name }}, {{ position.location.address_line1 }}, {{ position.location.city }}</div>{% endif %}
+          <div class="small">
+            {% if position.spots_left > 0 %}{{ position.spots_left }} of {{ position.slots }} spots left{% else %}Full{% if position.waitlist_count %} · {{ position.waitlist_count }} on the waitlist{% endif %}{% endif %}
+          </div>
+          {% include "registrations/_position_action.html" %}
+          {% if position.description %}<div class="mt-2">{{ position.description|rich_text }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% empty %}
+    <p class="text-body-secondary">Positions will be announced soon.</p>
+  {% endfor %}
+{% endblock content %}

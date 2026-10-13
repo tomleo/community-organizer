@@ -1,0 +1,52 @@
+{% extends "manage/base.html" %}
+{% load volunteer_tags event_tags %}
+{% block head_title %}{{ person.profile.full_name|default:person.email }}{% endblock head_title %}
+{% block content %}
+  <p><a href="{% url 'manage_volunteers' %}">← Volunteers</a></p>
+  <h1>{{ person.profile.full_name|default:person.email }}</h1>
+  <p class="lead">{{ person.hours|hours }} hours · {{ person.attended_count }} shift{{ person.attended_count|pluralize }} attended · {{ person.no_show_count }} no-show{{ person.no_show_count|pluralize }}</p>
+  <div id="volunteer-actions" class="d-flex flex-wrap gap-2 mb-3">
+    {% if perms.notifications.add_message %}<a class="btn btn-sm btn-outline-primary" href="{% url 'manage_message_new' %}?ids={{ person.pk }}">Email this volunteer</a>{% endif %}
+    {% if can_delete %}<a class="btn btn-sm btn-outline-danger" href="{% url 'manage_volunteer_delete' person.pk %}">Delete account</a>{% endif %}
+  </div>
+  <dl class="row">
+    <dt class="col-sm-3">Email</dt><dd class="col-sm-9"><a href="mailto:{{ person.email }}">{{ person.email }}</a>{% if person.profile.email_undeliverable_at %} <span title="{{ person.profile.email_undeliverable_reason }}">⚠ {{ person.profile.email_undeliverable_reason }}</span>{% endif %}</dd>
+    <dt class="col-sm-3">Phone</dt><dd class="col-sm-9">{{ person.profile.phone|default:"—" }}</dd>
+    <dt class="col-sm-3">Date of birth</dt><dd class="col-sm-9">{{ person.profile.date_of_birth|date:"F j, Y"|default:"—" }}</dd>
+    <dt class="col-sm-3">Address</dt>
+    <dd class="col-sm-9">{% if person.profile.address_line1 %}{{ person.profile.address_line1 }}{% if person.profile.address_line2 %}, {{ person.profile.address_line2 }}{% endif %}, {{ person.profile.city }} {{ person.profile.region }} {{ person.profile.postal_code }}, {{ person.profile.country }}{% else %}—{% endif %}</dd>
+    <dt class="col-sm-3">Joined</dt><dd class="col-sm-9">{{ person.date_joined|date:"F j, Y" }}</dd>
+    <dt class="col-sm-3">Role</dt>
+    <dd class="col-sm-9">
+      {% if can_change_role %}
+        <form method="post" action="{% url 'manage_volunteer_role' person.pk %}" class="d-flex gap-2" style="max-width: 24rem">
+          {% csrf_token %}
+          <select name="role" class="form-select form-select-sm" aria-label="Role">
+            {% for value, label in roles %}<option value="{{ value }}"{% if value == role %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <button class="btn btn-sm btn-outline-primary">Save</button>
+        </form>
+      {% else %}{{ role.label }}{% endif %}
+    </dd>
+    {% for label, value in answers %}
+      <dt class="col-sm-3">{{ label }}</dt><dd class="col-sm-9">{{ value|yesno:"Yes,No" }}</dd>
+    {% endfor %}
+  </dl>
+
+  <h2 class="h5 mt-4">Upcoming shifts</h2>
+  {% if upcoming %}
+    <ul>{% for r in upcoming %}<li>{{ r.position.starts_at|date_range:r.position.ends_at }} · {{ r.position.title }} · {{ r.position.event.title }} ({{ r.get_status_display }}){% if perms.registrations.view_registration %} · <a href="{% url 'manage_roster' r.position_id %}">Roster</a>{% endif %}</li>{% endfor %}</ul>
+  {% else %}<p class="text-body-secondary">None.</p>{% endif %}
+
+  <h2 class="h5 mt-4">Past shifts</h2>
+  {% if past %}
+    <ul>{% for r in past %}<li>{{ r.position.starts_at|date:"M j, Y" }} · {{ r.position.title }} · {{ r.position.event.title }} · {{ r.get_attendance_display }}</li>{% endfor %}</ul>
+  {% else %}<p class="text-body-secondary">None.</p>{% endif %}
+
+  {% if recent_emails is not None %}
+    <h2 class="h5 mt-4">Recent emails</h2>
+    {% if recent_emails %}
+      <ul>{% for email in recent_emails %}<li>{{ email.created_at|date:"M j, g:i A" }} · <a href="{% url 'manage_email' email.pk %}">{{ email.subject }}</a> · {{ email.get_status_display }}</li>{% endfor %}</ul>
+    {% else %}<p class="text-body-secondary">None.</p>{% endif %}
+  {% endif %}
+{% endblock content %}

@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block content %}
+  <p>Hi {{ name }},</p>
+  <p>The spot we offered you wasn't accepted in time, so it went to the next person. You can join the waitlist again.</p>
+  {% include "emails/_shift.html" %}
+  <p><a href="{{ event_url }}">View the event</a></p>
+{% endblock %}

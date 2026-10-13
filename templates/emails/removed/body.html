@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block content %}
+  <p>Hi {{ name }},</p>
+  <p>The organizers have removed you from this shift. If you think this is a mistake, reply to this email.</p>
+  {% include "emails/_shift.html" %}
+  <p><a href="{{ event_url }}">View the event</a></p>
+{% endblock %}

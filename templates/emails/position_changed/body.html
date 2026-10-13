@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block content %}
+  <p>Hi {{ name }},</p>
+  <p>The details of your shift have changed. It was: {{ old_when }} at {{ old_location }}. The new details are below.</p>
+  {% include "emails/_shift.html" %}
+  <p><a href="{{ registration_url }}">Manage your registration</a></p>
+{% endblock %}

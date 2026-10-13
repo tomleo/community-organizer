@@ -1,0 +1,29 @@
+# Override for running the production stack on a development machine (see docker/local.env).
+# Uses a local restic REST server as the backup target and serves https://localhost:8443.
+name: organizer-local  # keep apart from docker-compose.dev.yaml's containers
+
+x-local-app: &local-app
+  pull_policy: never
+
+services:
+  caddy:
+    ports: !override
+      - "8443:8443"
+  setup: *local-app
+  web: *local-app
+  worker: *local-app
+  beat: *local-app
+  backup:
+    pull_policy: never
+    depends_on:
+      restic-server:
+        condition: service_started
+  restic-server:
+    image: restic/rest-server:0.14.0
+    environment:
+      OPTIONS: --no-auth
+    volumes:
+      - restic-data:/data
+
+volumes:
+  restic-data:

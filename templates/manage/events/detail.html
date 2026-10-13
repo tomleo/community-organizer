@@ -1,0 +1,106 @@
+{% extends "manage/base.html" %}
+{% load event_tags richtext_tags image_tags %}
+{% block head_title %}{{ event.title }}{% endblock head_title %}
+{% block content %}
+  <p><a href="{% url 'manage_events' %}">← All events</a></p>
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+      <h1 class="mb-1">{{ event.title }}</h1>
+      <span class="badge text-bg-secondary">{{ event.get_status_display }}</span>
+      {% if event.archived_at %}<span class="badge text-bg-dark">Archived</span>{% endif %}
+      {% if event.pinned %}<span class="badge text-bg-info">Pinned</span>{% endif %}
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-secondary" href="{% url 'manage_event_edit' event.pk %}">Edit details</a>
+      <a class="btn btn-outline-secondary" href="{{ event.get_absolute_url }}">View public page</a>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <p class="mb-1"><strong>When:</strong> {{ event.starts_at|date_range:event.ends_at }}</p>
+      <p class="mb-1"><strong>Where:</strong> {{ event.location.name }}</p>
+      {% if event.resources_url %}<p class="mb-1"><strong>Resources:</strong> <a href="{{ event.resources_url }}">{{ event.resources_url }}</a></p>{% endif %}
+      {% if event.description %}<div class="mt-2">{{ event.description|rich_text }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    {% if perms.notifications.add_message %}<a class="btn btn-outline-primary" href="{% url 'manage_message_new' %}?event={{ event.pk }}">Email everyone in this event</a>{% endif %}
+    {% if event.status == "draft" %}
+      {% if event.position_count %}
+        <form method="post" action="{% url 'manage_event_action' event.pk 'publish' %}">{% csrf_token %}<button class="btn btn-primary">Publish</button></form>
+      {% else %}
+        <button class="btn btn-primary" disabled>Publish</button><span class="align-self-center text-body-secondary small">Add a position first</span>
+      {% endif %}
+    {% elif event.status == "published" %}
+      <form method="post" action="{% url 'manage_event_action' event.pk 'cancel' %}">{% csrf_token %}<button class="btn btn-outline-danger">Cancel event</button></form>
+    {% elif event.status == "cancelled" %}
+      <form method="post" action="{% url 'manage_event_action' event.pk 'reinstate' %}">{% csrf_token %}<button class="btn btn-outline-primary">Reinstate</button></form>
+    {% endif %}
+    <form method="post" action="{% url 'manage_event_action' event.pk event.pinned|yesno:'unpin,pin' %}">{% csrf_token %}<button class="btn btn-outline-secondary">{{ event.pinned|yesno:"Unpin,Pin to home page" }}</button></form>
+    <form method="post" action="{% url 'manage_event_action' event.pk event.archived_at|yesno:'restore,archive' %}">{% csrf_token %}<button class="btn btn-outline-secondary">{{ event.archived_at|yesno:"Restore,Archive" }}</button></form>
+  </div>
+
+  {# positions #}
+  <div class="d-flex justify-content-between align-items-center">
+    <h2 class="h4">Positions</h2>
+    {% if perms.events.add_position %}<a class="btn btn-sm btn-primary" href="{% url 'manage_position_new' event.pk %}">Add position</a>{% endif %}
+  </div>
+  {% if event.positions.all %}
+    <div class="table-responsive mb-4">
+      <table class="table align-middle">
+        <thead><tr><th>When</th><th>Title</th><th>Location</th><th class="text-end">Taken / spots</th><th></th></tr></thead>
+        <tbody>
+          {% for position in event.positions.all %}
+            <tr>
+              <td>{{ position.starts_at|date_range:position.ends_at }}</td>
+              <td>{{ position.title }}</td>
+              <td>{{ position.effective_location.name }}</td>
+              <td class="text-end">{{ position.held_parties|add:position.held_guests }} / {{ position.slots }}{% if position.waitlist_count %} · {{ position.waitlist_count }} waiting{% endif %}</td>
+              <td class="text-end text-nowrap">
+                {% if perms.registrations.view_registration %}<a class="btn btn-sm btn-outline-primary" href="{% url 'manage_roster' position.pk %}">Roster</a>{% endif %}
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'manage_position_edit' position.pk %}">Edit</a>
+                {% if event.status == "draft" and perms.events.delete_position %}<a class="btn btn-sm btn-outline-danger" href="{% url 'manage_position_delete' position.pk %}">Delete</a>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">No positions yet.</p>
+  {% endif %}
+
+  {# photos #}
+  <h2 class="h4">Photos</h2>
+  {% with photos=event.photos.all %}
+    {% if photos %}
+      <div class="row row-cols-2 row-cols-md-4 g-3 mb-3">
+        {% for photo in photos %}
+          <div class="col">
+            <div class="card h-100">
+              <img src="{% resized_url photo.image 800 %}" class="card-img-top" alt="" style="aspect-ratio: 16 / 9; object-fit: cover">
+              <div class="card-body p-2 d-flex flex-wrap gap-1">
+                {% if forloop.first %}<span class="badge text-bg-primary align-self-center">Cover</span>{% endif %}
+                <form method="post" action="{% url 'manage_photo_move' photo.pk 'up' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary" {% if forloop.first %}disabled{% endif %} aria-label="Move up">↑</button></form>
+                <form method="post" action="{% url 'manage_photo_move' photo.pk 'down' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary" {% if forloop.last %}disabled{% endif %} aria-label="Move down">↓</button></form>
+                <form method="post" action="{% url 'manage_photo_delete' photo.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger">Delete</button></form>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if photos|length < photo_limit %}
+      <form method="post" action="{% url 'manage_photos_upload' event.pk %}" enctype="multipart/form-data" class="app-form">
+        {% csrf_token %}
+        {{ photo_form }}
+        <p class="form-text">JPEG, PNG or WebP, up to 10 MB each. Up to {{ photo_limit }} photos; the first is the cover.</p>
+        <button type="submit" class="btn btn-outline-primary">Upload</button>
+      </form>
+    {% else %}
+      <p class="text-body-secondary">This event has the maximum of {{ photo_limit }} photos.</p>
+    {% endif %}
+  {% endwith %}
+{% endblock content %}

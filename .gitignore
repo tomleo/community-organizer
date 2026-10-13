@@ -8,3 +8,14 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Local environment and generated files
+.env
+media/
+staticfiles/
+static/dist/
+frontend/node_modules/
+celerybeat-schedule*
+
+# Optional production mounts created next to the compose file
+/brand/

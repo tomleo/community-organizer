@@ -1,0 +1,16 @@
+{% extends "manage/base.html" %}
+{% block head_title %}{% if object %}Edit position{% else %}New position{% endif %}{% endblock head_title %}
+{% block content %}
+  <p><a href="{% url 'manage_event' event.pk %}">← {{ event.title }}</a></p>
+  <h1>{% if object %}Edit {{ object.title }}{% else %}New position{% endif %}</h1>
+  <p class="text-body-secondary small">Times are in {{ site_settings.time_zone }}.</p>
+  {% if registered_count %}
+    <div class="alert alert-warning">{{ registered_count }} {{ registered_count|pluralize:"person is,people are" }} registered for this position. Changes to the time or place affect them.</div>
+  {% endif %}
+  <form method="post" class="app-form">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a class="btn btn-link" href="{% url 'manage_event' event.pk %}">Cancel</a>
+  </form>
+{% endblock content %}

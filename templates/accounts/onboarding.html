@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block head_title %}Welcome{% endblock head_title %}
+{% block content %}
+  <h1>Welcome to {{ site_settings.org_name }}</h1>
+  <p class="lead">Please complete your profile before continuing.</p>
+  {% include "accounts/_profile_form_fields.html" %}
+{% endblock content %}

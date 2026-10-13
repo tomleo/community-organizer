@@ -1,0 +1,11 @@
+{% autoescape off %}Hi {{ name }},
+
+A spot opened up close to the start, so we've registered you from the waitlist. If you can't make it, please cancel so someone else can go.
+
+{% include "emails/_shift.txt" %}
+
+Manage your registration: {{ registration_url }}
+
+—
+{{ site_settings.org_name }}{% if site_settings.contact_email %} · {{ site_settings.contact_email }}{% endif %}
+{{ site_url }}{% endautoescape %}

@@ -1,0 +1,26 @@
+{% extends "manage/base.html" %}
+{% block head_title %}New message{% endblock head_title %}
+{% block content %}
+  <h1>New message</h1>
+  {% if audience %}
+    <p>To: <strong>{{ audience.description }}</strong> — {{ audience.users|length }} recipient{{ audience.users|length|pluralize }}{% if audience.skipped_total %}, {{ audience.skipped_total }} skipped{% endif %}</p>
+    {% if is_roster %}
+      <form method="get" class="mb-3">
+        {% if request.GET.position %}<input type="hidden" name="position" value="{{ request.GET.position }}">{% endif %}
+        {% if request.GET.event %}<input type="hidden" name="event" value="{{ request.GET.event }}">{% endif %}
+        {% for status in statuses %}
+          <label class="me-3"><input type="checkbox" class="form-check-input" name="statuses" value="{{ status }}"{% if status in chosen %} checked{% endif %}> {{ status|capfirst }}</label>
+        {% endfor %}
+        <button class="btn btn-sm btn-outline-secondary">Update recipients</button>
+      </form>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-warning">Choose recipients from the <a href="{% url 'manage_volunteers' %}">directory</a>, a roster or an event.</div>
+  {% endif %}
+  <form method="post" action="?{{ query }}" class="app-form">
+    {% csrf_token %}
+    {{ form }}
+    <input type="hidden" name="step" value="preview">
+    <button type="submit" class="btn btn-primary">Preview</button>
+  </form>
+{% endblock content %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block head_title %}Delete account{% endblock head_title %}
+{% block content %}
+  <h1>Delete your account</h1>
+  <p>We'll erase your name, contact details, address, date of birth, photo, comments and your guests' names, cancel your upcoming shifts, and you won't be able to log in again. Shifts you've already done stay in the organization's records as "Deleted volunteer". This can't be undone.</p>
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+  <form method="post" class="app-form">
+    {% csrf_token %}
+    <p><label for="id_email">Type your email address ({{ user.email }}) to confirm:</label>
+    <input type="email" name="email" id="id_email" required autocomplete="off"></p>
+    <button type="submit" class="btn btn-danger">Delete my account</button>
+    <a class="btn btn-link" href="{% url 'profile' %}">Cancel</a>
+  </form>
+{% endblock content %}

@@ -1,0 +1,1 @@
+{% autoescape off %}You've been removed from {{ position.title }}{% endautoescape %}

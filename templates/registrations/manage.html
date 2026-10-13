@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load event_tags %}
+{% block head_title %}Your registration{% endblock head_title %}
+{% block content %}
+  <p><a href="{{ event.get_absolute_url }}">← {{ event.title }}</a></p>
+  <h1>{{ position.title }}</h1>
+  <p class="lead mb-1">{{ position.starts_at|date_range:position.ends_at }}</p>
+  <p>
+    {% if registration.status == "registered" %}<span class="badge text-bg-success">Registered</span>
+    {% elif registration.status == "waitlisted" %}<span class="badge text-bg-warning">#{{ waitlist_place }} on the waitlist</span>
+    {% elif registration.status == "offered" %}<span class="badge text-bg-info">Spot offered until {{ registration.offer_expires_at|date:"D M j, g:i A" }}</span>
+    {% else %}<span class="badge text-bg-secondary">{{ registration.get_status_display }}</span>{% endif %}
+  </p>
+  {% if registration.status == "offered" %}
+    <div class="d-flex gap-2 mb-3">
+      <form method="post" action="{% url 'registration_accept' registration.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-primary">Accept</button></form>
+      <form method="post" action="{% url 'registration_decline' registration.pk %}">{% csrf_token %}<button class="btn btn-outline-secondary">Decline</button></form>
+    </div>
+  {% endif %}
+  {% if editable %}
+    <form method="post" class="app-form mb-4">
+      {% csrf_token %}
+      {{ form }}
+      {% include "registrations/_guest_rows.html" with formset=form.guest_formset %}
+      <button type="submit" class="btn btn-primary">Save changes</button>
+    </form>
+  {% endif %}
+  {% if registration.is_active %}
+    <a class="btn btn-outline-danger" href="{% url 'registration_cancel' registration.pk %}">Cancel registration</a>
+  {% endif %}
+{% endblock content %}

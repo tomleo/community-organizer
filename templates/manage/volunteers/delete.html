@@ -1,0 +1,11 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Delete account{% endblock head_title %}
+{% block content %}
+  <h1>Delete {{ person.profile.full_name|default:person.email }}'s account?</h1>
+  <p>This erases their name, contact details, address, date of birth, photo, comments and guests' names, and they can no longer log in. Upcoming registrations are cancelled. Past shifts stay on rosters and in hour totals as "Deleted volunteer". This can't be undone.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Delete account</button>
+    <a class="btn btn-link" href="{% url 'manage_volunteer' person.pk %}">Cancel</a>
+  </form>
+{% endblock content %}

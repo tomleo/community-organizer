@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block content %}
+  <p>Hi {{ name }},</p>
+  <p>A spot opened up close to the start, so we've registered you from the waitlist. If you can't make it, please cancel so someone else can go.</p>
+  {% include "emails/_shift.html" %}
+  <p><a href="{{ registration_url }}">Manage your registration</a></p>
+{% endblock %}

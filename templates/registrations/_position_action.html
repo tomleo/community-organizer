@@ -1,0 +1,22 @@
+{% with reg=position.my_registration %}
+  <div class="mt-2 d-flex flex-wrap align-items-center gap-2">
+    {% if reg.status == "registered" %}
+      <span class="badge text-bg-success">You're registered</span>
+      <a href="{% url 'registration' reg.pk %}">Manage</a>
+    {% elif reg.status == "waitlisted" %}
+      <span class="badge text-bg-warning">You're #{{ position.my_place }} on the waitlist</span>
+      <a href="{% url 'registration' reg.pk %}">Manage</a>
+    {% elif reg.status == "offered" %}
+      <span>A spot opened up! Accept by {{ reg.offer_expires_at|date:"D M j, g:i A" }}</span>
+      <form method="post" action="{% url 'registration_accept' reg.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-sm btn-primary">Accept</button></form>
+      <form method="post" action="{% url 'registration_decline' reg.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-sm btn-outline-secondary">Decline</button></form>
+    {% elif event.status == "cancelled" %}
+    {% elif not position.registration_open %}
+      <span class="text-body-secondary small">Registration is closed.</span>
+    {% elif position.spots_left > 0 %}
+      <a class="btn btn-sm btn-primary" href="{% url 'register' position.pk %}">Register</a>
+    {% else %}
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'register' position.pk %}">Join waitlist</a>
+    {% endif %}
+  </div>
+{% endwith %}

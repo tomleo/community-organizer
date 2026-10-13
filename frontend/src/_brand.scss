@@ -1,0 +1,8 @@
+// Brand overrides, applied before Bootstrap. Uncomment and change, then rebuild the frontend
+// (docker compose -f docker-compose.dev.yaml run --rm frontend npm run build) and run
+// `uv run manage.py check_brand_contrast` to confirm text on your colors stays readable.
+//
+// $primary: #0a58ca;
+// $link-color: $primary;
+// $font-family-sans-serif: "Atkinson Hyperlegible", system-ui, sans-serif;
+// $border-radius: .5rem;

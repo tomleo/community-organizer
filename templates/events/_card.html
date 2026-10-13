@@ -1,0 +1,16 @@
+{% load image_tags event_tags %}
+<div class="card h-100">
+  {% with cover=event.photos.all.0 %}
+    {% if cover %}
+      <img src="{% resized_url cover.image 800 %}" class="card-img-top" alt="" style="aspect-ratio: 16 / 9; object-fit: cover">
+    {% endif %}
+  {% endwith %}
+  <div class="card-body">
+    {% if event.status == "cancelled" %}<span class="badge text-bg-danger mb-2">Cancelled</span>{% endif %}
+    <h2 class="h5 card-title">
+      <a class="stretched-link text-decoration-none" href="{{ event.get_absolute_url }}">{{ event.title }}</a>
+    </h2>
+    <p class="card-text mb-1">{{ event.starts_at|date_range:event.ends_at }}</p>
+    <p class="card-text text-body-secondary">{{ event.location.name }}</p>
+  </div>
+</div>

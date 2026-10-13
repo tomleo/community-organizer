@@ -1,0 +1,6 @@
+{% autoescape off %}Hi {{ name }},
+
+{{ message.body }}
+
+{% if sender_name %}— {{ sender_name }}, {{ site_settings.org_name }}{% else %}— {{ site_settings.org_name }}{% endif %}
+{{ site_url }}{% endautoescape %}

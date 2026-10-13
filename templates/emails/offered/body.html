@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block content %}
+  <p>Hi {{ name }},</p>
+  <p>A spot opened up for you. Accept it by {{ registration.offer_expires_at|date:"D, M j, g:i A" }} or it goes to the next person.</p>
+  {% include "emails/_shift.html" %}
+  <p><a href="{{ registration_url }}">Accept or decline</a></p>
+{% endblock %}

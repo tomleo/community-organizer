@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block content %}
+  <p>Hi {{ name }},</p>
+  <p>Good news: {{ event.title }} is back on, and your {% if registration.status == "waitlisted" %}waitlist place{% else %}registration{% endif %} still stands.</p>
+  {% include "emails/_shift.html" %}
+  <p><a href="{{ registration_url }}">Manage your registration</a></p>
+{% endblock %}

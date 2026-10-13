@@ -1,0 +1,68 @@
+{% load static image_tags %}<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block head_title %}{% endblock head_title %} · {{ site_settings.org_name }}</title>
+    <link rel="stylesheet" href="{% static 'dist/main.css' %}">
+    {% block extra_head %}{% endblock extra_head %}
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md bg-body-tertiary border-bottom mb-4">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
+          {% if site_settings.logo %}<img src="{% resized_url site_settings.logo 128 %}" alt="" height="32">{% endif %}
+          <span>{{ site_settings.org_name }}</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav"
+                aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="main-nav">
+          <ul class="navbar-nav ms-auto" id="nav-links">
+            <li class="nav-item"><a class="nav-link" href="{% url 'events' %}">Events</a></li>
+            {% if user.is_authenticated %}
+              {% if management_links %}
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Manage</a>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    {% for link in management_links %}<li><a class="dropdown-item" href="{{ link.url }}">{{ link.label }}</a></li>{% endfor %}
+                  </ul>
+                </li>
+              {% endif %}
+              <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">Profile</a></li>
+              <li class="nav-item">
+                <form method="post" action="{% url 'account_logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-link nav-link">Log out</button>
+                </form>
+              </li>
+            {% else %}
+              <li class="nav-item"><a class="nav-link" href="{% url 'account_login' %}">Log in</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'account_signup' %}">Sign up</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <main class="container">
+      {% if email_problem %}
+        <div class="alert alert-warning">We couldn't deliver email to you ({{ email_problem }}). <a href="{% url 'account_email' %}">Update your email address</a>.</div>
+      {% endif %}
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">{{ message }}</div>
+      {% endfor %}
+      {% block content %}{% endblock content %}
+    </main>
+    {% if site_settings.contact_email or site_settings.website_url or site_settings.footer_note or can_manage %}
+      <footer class="container border-top mt-5 py-3 text-body-secondary small">
+        {% if site_settings.footer_note %}<div class="mb-1">{{ site_settings.footer_note }}</div>{% endif %}
+        {% if site_settings.contact_email %}<a href="mailto:{{ site_settings.contact_email }}">{{ site_settings.contact_email }}</a>{% endif %}
+        {% if site_settings.website_url %}<a class="ms-3" href="{{ site_settings.website_url }}">{{ site_settings.website_url }}</a>{% endif %}
+        {% if can_manage %}<span class="ms-3">Version {{ app_version }}</span>{% endif %}
+      </footer>
+    {% endif %}
+    <script src="{% static 'dist/main.js' %}" type="module"></script>
+    {% block extra_body %}{% endblock extra_body %}
+  </body>
+</html>

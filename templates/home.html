@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load image_tags richtext_tags %}
+{% block head_title %}Home{% endblock head_title %}
+{% block content %}
+  {% if site_settings.home_image %}
+    <img class="w-100 rounded mb-4" style="aspect-ratio: 16 / 5; object-fit: cover" alt=""
+         src="{% resized_url site_settings.home_image 1600 %}"
+         srcset="{% resized_url site_settings.home_image 800 %} 800w, {% resized_url site_settings.home_image 1600 %} 1600w"
+         sizes="100vw">
+  {% endif %}
+  <h1>{{ site_settings.home_headline|default:site_settings.org_name }}</h1>
+  {% if site_settings.home_intro %}<div class="lead mb-3">{{ site_settings.home_intro|rich_text }}</div>{% else %}<p class="lead">Volunteer with us.</p>{% endif %}
+  {% if not user.is_authenticated %}
+    <a class="btn btn-primary mb-4" href="{% url 'account_signup' %}">Sign up to volunteer</a>
+  {% endif %}
+  {% if featured_events %}
+    <h2 class="h4 mt-4">Featured events</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-3">
+      {% for event in featured_events %}<div class="col">{% include "events/_card.html" %}</div>{% endfor %}
+    </div>
+  {% endif %}
+  <a href="{% url 'events' %}">See all events</a>
+  {% if site_settings.about_body %}
+    <section class="row g-4 align-items-center mt-5">
+      {% if site_settings.about_image %}<div class="col-md-5"><img class="w-100 rounded" alt="" src="{% resized_url site_settings.about_image 800 %}"></div>{% endif %}
+      <div class="{% if site_settings.about_image %}col-md-7{% else %}col-12{% endif %}">
+        <h2 class="h4">{{ site_settings.about_title }}</h2>
+        {{ site_settings.about_body|rich_text }}
+      </div>
+    </section>
+  {% endif %}
+{% endblock content %}

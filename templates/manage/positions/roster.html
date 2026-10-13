@@ -1,0 +1,91 @@
+{% extends "manage/base.html" %}
+{% load event_tags question_tags volunteer_tags %}
+{% block head_title %}Roster · {{ position.title }}{% endblock head_title %}
+{% block content %}
+  <p><a href="{% url 'manage_event' position.event_id %}">← {{ position.event.title }}</a></p>
+  <h1>{{ position.title }}</h1>
+  <p class="lead mb-1">{{ position.starts_at|date_range:position.ends_at }}</p>
+  <p><strong>{{ taken }} of {{ position.slots }} taken, {{ available }} open, {{ waitlist|length }} waiting</strong></p>
+  <p class="d-flex flex-wrap gap-2" id="roster-actions">{% if perms.notifications.add_message %}<a class="btn btn-sm btn-outline-primary" href="{% url 'manage_message_new' %}?position={{ position.pk }}">Email this roster</a>{% endif %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'manage_roster_export' position.pk %}">Export CSV</a></p>
+
+  <h2 class="h5 mt-4">Registered</h2>
+  {% if started and registered and perms.registrations.change_registration %}
+    <form method="post" action="{% url 'manage_mark_all_attended' position.pk %}" class="mb-2">{% csrf_token %}<button class="btn btn-sm btn-outline-success">Mark all unmarked as attended</button></form>
+  {% endif %}
+  {% if registered %}
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Volunteer</th><th>Contact</th><th>Guests</th><th>Comment</th><th>Registered</th>{% if started %}<th>Attendance</th>{% endif %}<th></th></tr></thead>
+      <tbody>
+        {% for r in registered %}
+          <tr>
+            <td>{{ r.volunteer|volunteer_name }}{% for label in r.volunteer.profile.answers|yes_labels:questions %} <span class="badge text-bg-light border">{{ label }}</span>{% endfor %}{% if r.volunteer.profile.email_undeliverable_at %} <span title="{{ r.volunteer.profile.email_undeliverable_reason }}">⚠</span>{% endif %}</td>
+            <td>{% with email=r.volunteer|contact_email %}{% if email %}<a href="mailto:{{ email }}">{{ email }}</a>{% else %}—{% endif %}{% endwith %}<br>{{ r.volunteer.profile.phone }}</td>
+            <td>{% for guest in r.guests.all %}{{ guest.first_name }} {{ guest.last_name }}{% if guest.relationship %} ({{ guest.relationship }}){% endif %}{% for label in guest.answers|yes_labels:guest_question_list %} <span class="badge text-bg-light border">{{ label }}</span>{% endfor %}{% if not forloop.last %}<br>{% endif %}{% empty %}—{% endfor %}</td>
+            <td>{{ r.comments|default:"—" }}</td>
+            <td>{{ r.created_at|date:"M j, g:i A" }}</td>
+            {% if started %}
+              <td class="text-nowrap">
+                {% if perms.registrations.change_registration %}
+                  <form method="post" action="{% url 'manage_attendance' r.pk %}" class="d-inline">{% csrf_token %}<input type="hidden" name="attendance" value="attended"><button class="btn btn-sm {% if r.attendance == 'attended' %}btn-success{% else %}btn-outline-success{% endif %}">Attended</button></form>
+                  <form method="post" action="{% url 'manage_attendance' r.pk %}" class="d-inline">{% csrf_token %}<input type="hidden" name="attendance" value="no_show"><button class="btn btn-sm {% if r.attendance == 'no_show' %}btn-danger{% else %}btn-outline-danger{% endif %}">No-show</button></form>
+                {% else %}{{ r.get_attendance_display }}{% endif %}
+              </td>
+            {% endif %}
+            <td class="text-end">{% if perms.registrations.change_registration %}<a class="btn btn-sm btn-outline-danger" href="{% url 'manage_registration_remove' r.pk %}">Remove</a>{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  {% else %}<p class="text-body-secondary">Nobody yet.</p>{% endif %}
+
+  {% if offered %}
+    <h2 class="h5 mt-4">Offers pending</h2>
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Volunteer</th><th>Party</th><th>Offered</th><th>Expires</th><th></th></tr></thead>
+      <tbody>
+        {% for r in offered %}
+          <tr>
+            <td>{{ r.volunteer|volunteer_name }}{% for label in r.volunteer.profile.answers|yes_labels:questions %} <span class="badge text-bg-light border">{{ label }}</span>{% endfor %}{% if r.volunteer.profile.email_undeliverable_at %} <span title="{{ r.volunteer.profile.email_undeliverable_reason }}">⚠</span>{% endif %}<br><span class="small">{{ r.volunteer|contact_email }}</span></td>
+            <td>{{ r.guests.all|length|add:1 }}</td>
+            <td>{{ r.offered_at|date:"M j, g:i A" }}</td>
+            <td>{{ r.offer_expires_at|date:"M j, g:i A" }}</td>
+            <td class="text-end">{% if perms.registrations.change_registration %}<a class="btn btn-sm btn-outline-danger" href="{% url 'manage_registration_remove' r.pk %}">Remove</a>{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  {% endif %}
+
+  <h2 class="h5 mt-4">Waitlist</h2>
+  {% if waitlist %}
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>#</th><th>Volunteer</th><th>Party</th><th>Joined</th><th></th></tr></thead>
+      <tbody>
+        {% for r in waitlist %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ r.volunteer|volunteer_name }}{% for label in r.volunteer.profile.answers|yes_labels:questions %} <span class="badge text-bg-light border">{{ label }}</span>{% endfor %}{% if r.volunteer.profile.email_undeliverable_at %} <span title="{{ r.volunteer.profile.email_undeliverable_reason }}">⚠</span>{% endif %}<br><span class="small">{{ r.volunteer|contact_email }}</span></td>
+            <td>{{ r.guests.all|length|add:1 }}</td>
+            <td>{{ r.waitlisted_at|date:"M j, g:i A" }}</td>
+            <td class="text-end text-nowrap">
+              {% if perms.registrations.change_registration %}
+                <form method="post" action="{% url 'manage_registration_promote' r.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-primary" {% if not r.fits %}disabled title="Not enough open spots for this party"{% endif %}>Move up now</button></form>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'manage_registration_remove' r.pk %}">Remove</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  {% else %}<p class="text-body-secondary">Nobody waiting.</p>{% endif %}
+
+  {% if perms.registrations.change_registration %}
+    <h2 class="h5 mt-4">Add volunteer</h2>
+    <form method="post" action="{% url 'manage_roster_add' position.pk %}" class="app-form">
+      {% csrf_token %}
+      {{ add_form }}
+      {% include "registrations/_guest_rows.html" with formset=add_form.guest_formset %}
+      <button type="submit" class="btn btn-outline-primary">Add</button>
+    </form>
+  {% endif %}
+{% endblock content %}

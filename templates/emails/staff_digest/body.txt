@@ -1,0 +1,13 @@
+{% autoescape off %}Hi {{ name }},
+
+{% if digest.activity %}Changes in the last 24 hours:
+{% for row in digest.activity %}- {{ row.position.event.title }} · {{ row.position.title }}: {{ row.volunteer }} — {{ row.change }}
+{% endfor %}
+{% endif %}{% if digest.underfilled %}Shifts in the next 48 hours that still need people:
+{% for row in digest.underfilled %}- {{ row.position.event.title }} · {{ row.position.title }}: {{ row.open }} open
+{% endfor %}
+{% endif %}Manage events: {{ manage_url }}
+
+—
+{{ site_settings.org_name }}
+{{ site_url }}{% endautoescape %}

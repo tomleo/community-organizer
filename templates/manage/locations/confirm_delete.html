@@ -1,0 +1,20 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Delete location{% endblock head_title %}
+{% block content %}
+  <h1>Delete {{ object.name }}?</h1>
+  {% if events_using %}
+    <p>This location can't be deleted because these events use it:</p>
+    <ul>{% for event in events_using %}<li><a href="{% url 'manage_event' event.pk %}">{{ event.title }}</a></li>{% endfor %}</ul>
+    {% if positions_using %}
+      <p>It is also the location of these positions:</p>
+      <ul>{% for position in positions_using %}<li><a href="{% url 'manage_position_edit' position.pk %}">{{ position.title }}</a> ({{ position.event.title }})</li>{% endfor %}</ul>
+    {% endif %}
+    <a class="btn btn-secondary" href="{% url 'manage_locations' %}">Back to locations</a>
+  {% else %}
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete location</button>
+      <a class="btn btn-link" href="{% url 'manage_locations' %}">Cancel</a>
+    </form>
+  {% endif %}
+{% endblock content %}

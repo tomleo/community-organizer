@@ -1,0 +1,29 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Locations{% endblock head_title %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Locations</h1>
+    {% if perms.events.add_location %}<a class="btn btn-primary" href="{% url 'manage_location_new' %}">New location</a>{% endif %}
+  </div>
+  {% if locations %}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Name</th><th>Address</th><th></th></tr></thead>
+        <tbody>
+          {% for location in locations %}
+            <tr>
+              <td>{{ location.name }}</td>
+              <td>{{ location.address_line1 }}, {{ location.city }}, {{ location.region }}</td>
+              <td class="text-end text-nowrap">
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'manage_location_edit' location.pk %}">Edit</a>
+                {% if perms.events.delete_location %}<a class="btn btn-sm btn-outline-danger" href="{% url 'manage_location_delete' location.pk %}">Delete</a>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">No locations yet. Add the places where your events happen.</p>
+  {% endif %}
+{% endblock content %}

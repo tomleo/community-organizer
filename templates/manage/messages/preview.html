@@ -1,0 +1,23 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Preview message{% endblock head_title %}
+{% block content %}
+  <h1>Preview</h1>
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% else %}
+    <p><strong>Send to {{ audience.users|length }} volunteer{{ audience.users|length|pluralize }}</strong> ({{ audience.description }}).
+      {% if audience.skipped_total %}{{ audience.skipped_total }} skipped:{% for reason, count in audience.skipped.items %} {{ count }} {{ reason }}{% if not forloop.last %},{% endif %}{% endfor %}.{% endif %}</p>
+  {% endif %}
+  <div class="card mb-3"><div class="card-body">
+    <h2 class="h5">{{ form.cleaned_data.subject }}</h2>
+    {{ form.cleaned_data.body|linebreaks }}
+  </div></div>
+  <form method="post" action="?{{ query }}">
+    {% csrf_token %}
+    <input type="hidden" name="subject" value="{{ form.cleaned_data.subject }}">
+    <textarea name="body" hidden>{{ form.cleaned_data.body }}</textarea>
+    <input type="hidden" name="send_token" value="{{ send_token }}">
+    {% if not error %}<button type="submit" name="step" value="send" class="btn btn-primary">Send</button>{% endif %}
+    <button type="submit" name="step" value="edit" class="btn btn-link" formnovalidate>Back</button>
+  </form>
+{% endblock content %}

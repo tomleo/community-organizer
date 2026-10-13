@@ -1,0 +1,18 @@
+{% if formset %}
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
+  <fieldset class="mb-3" data-guest-rows>
+    <legend class="h6">Guests</legend>
+    {% for guest_form in formset %}
+      <div class="row g-2 mb-2" data-guest-row>
+        <div class="col-sm-4">{{ guest_form.first_name.label_tag }}{{ guest_form.first_name }}{{ guest_form.first_name.errors }}</div>
+        <div class="col-sm-4">{{ guest_form.last_name.label_tag }}{{ guest_form.last_name }}{{ guest_form.last_name.errors }}</div>
+        <div class="col-sm-4">{{ guest_form.relationship.label_tag }}{{ guest_form.relationship }}{{ guest_form.relationship.errors }}</div>
+        {% for field in guest_form.question_fields %}
+          <div class="col-12"><div class="form-check">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div></div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-add-guest hidden>Add guest</button>
+  </fieldset>
+{% endif %}

@@ -1,0 +1,16 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Email{% endblock head_title %}
+{% block content %}
+  <p><a href="{% url 'manage_emails' %}">← Email log</a></p>
+  <h1 class="h3">{{ email.subject }}</h1>
+  <dl class="row">
+    <dt class="col-sm-3">To</dt><dd class="col-sm-9">{{ email.to }}</dd>
+    <dt class="col-sm-3">Kind</dt><dd class="col-sm-9">{{ email.get_kind_display }}</dd>
+    <dt class="col-sm-3">Status</dt><dd class="col-sm-9">{{ email.get_status_display }}</dd>
+    <dt class="col-sm-3">Created</dt><dd class="col-sm-9">{{ email.created_at }}</dd>
+    <dt class="col-sm-3">Sent</dt><dd class="col-sm-9">{{ email.sent_at|default:"—" }}</dd>
+    <dt class="col-sm-3">Provider id</dt><dd class="col-sm-9">{{ email.provider_message_id|default:"—" }}</dd>
+    {% if email.error %}<dt class="col-sm-3">Error</dt><dd class="col-sm-9">{{ email.error }}</dd>{% endif %}
+  </dl>
+  <pre class="border rounded p-3 bg-body-tertiary" style="white-space: pre-wrap">{{ email.text_body }}</pre>
+{% endblock content %}

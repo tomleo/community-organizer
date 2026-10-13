@@ -1,0 +1,24 @@
+{% extends "manage/base.html" %}
+{% block head_title %}Messages{% endblock head_title %}
+{% block content %}
+  <h1>Messages</h1>
+  {% if sent %}
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Sent</th><th>From</th><th>Subject</th><th>To</th><th class="text-end">Recipients</th></tr></thead>
+      <tbody>
+        {% for m in sent %}
+          <tr>
+            <td class="text-nowrap">{{ m.created_at|date:"M j, g:i A" }}</td>
+            <td>{{ m.sender.profile.full_name|default:m.sender.email|default:"—" }}</td>
+            <td><a href="{% url 'manage_message' m.pk %}">{{ m.subject }}</a></td>
+            <td>{{ m.audience }}</td>
+            <td class="text-end">{{ m.recipient_count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% include "events/_pagination.html" %}
+  {% else %}
+    <p class="text-body-secondary">No messages sent yet. Start one from the <a href="{% url 'manage_volunteers' %}">directory</a>, a roster or an event.</p>
+  {% endif %}
+{% endblock content %}

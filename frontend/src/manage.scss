@@ -1,0 +1,9 @@
+// Attachments are disabled, so hide the attach-file button.
+.trix-button-group--file-tools {
+  display: none !important;
+}
+
+trix-editor {
+  min-height: 10rem;
+  background-color: #fff;
+}

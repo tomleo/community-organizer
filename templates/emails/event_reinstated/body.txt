@@ -1,0 +1,11 @@
+{% autoescape off %}Hi {{ name }},
+
+Good news: {{ event.title }} is back on, and your {% if registration.status == "waitlisted" %}waitlist place{% else %}registration{% endif %} still stands.
+
+{% include "emails/_shift.txt" %}
+
+Manage your registration: {{ registration_url }}
+
+—
+{{ site_settings.org_name }}{% if site_settings.contact_email %} · {{ site_settings.contact_email }}{% endif %}
+{{ site_url }}{% endautoescape %}

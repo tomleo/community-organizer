@@ -1,0 +1,1 @@
+{% autoescape off %}You're registered: {{ position.title }} · {{ event.title }}{% endautoescape %}
