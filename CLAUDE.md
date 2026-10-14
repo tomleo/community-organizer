@@ -21,7 +21,7 @@ Python tooling runs through `uv run`; Node runs only in Docker (the host's Node 
 - Lint/format: `uv run ruff check .` / `uv run ruff format .`
 - First admin: `uv run manage.py createsuperuser`, then log in through the normal login page
 - Production-like stack locally: `docker build -t community-organizer:local .` then `docker compose --env-file docker/local.env -f docker-compose.yaml -f docker-compose.local.yaml up -d` (https://localhost:8443; project name `organizer-local`)
-- Release: `IMAGE=… scripts/release.sh <version>` (docs/releasing.md)
+- Release: `scripts/release.sh [major|minor|patch]` (Commitizen) bumps the version and `CHANGELOG.md` from Conventional Commit messages, commits and tags; pushing the tag makes CI (`.github/workflows/ci.yml`) build and push the image to GHCR (docs/releasing.md). Commit messages must follow Conventional Commits (`feat:`, `fix:`, `feat!:` / `BREAKING CHANGE:`); CI checks them on PRs.
 
 ## Layout
 
