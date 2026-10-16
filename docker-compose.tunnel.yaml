@@ -1,0 +1,27 @@
+# Override for a server behind a tunnel or reverse proxy that handles HTTPS (Pangolin, Cloudflare Tunnel; see
+# docs/deployment.md). Caddy serves plain HTTP on HTTP_PORT and keeps the proxy's X-Forwarded-* headers.
+# Use it with the stock file by adding to .env:
+#   COMPOSE_FILE=docker-compose.yaml:docker-compose.tunnel.yaml
+
+services:
+  caddy:
+    ports: !override
+      - "${HTTP_PORT:-8080}:80"
+  web:
+    environment:
+      # The proxy and Caddy each add an X-Forwarded-For entry; login rate limits need the visitor's address.
+      TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-2}
+
+configs:
+  caddyfile:
+    content: |
+      {
+        servers {
+          # Any private address is trusted; narrow this to the proxy's address if you can.
+          trusted_proxies static private_ranges
+        }
+      }
+      # SITE_URL in .env stays the public https:// address (allowed host and trusted origin come from it).
+      :80 {
+        import /etc/caddy/site.caddy
+      }

@@ -33,13 +33,17 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     logging: *logging
+    # Let's Encrypt must reach these on 80 and 443 from the internet; only change them if a router or
+    # firewall forwards 80/443 to the ports set here.
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
+      - source: caddy-site
+        target: /etc/caddy/site.caddy
     volumes:
       - static:/srv/static:ro
       - media:/srv/media:ro
@@ -129,27 +133,31 @@ configs:
   caddyfile:
     content: |
       ${SITE_URL:?Set SITE_URL in .env} {
-        encode zstd gzip
-        # Several photos (up to 10 MB each) can be uploaded in one form.
-        request_body {
-          max_size 110MB
-        }
-        handle_path /static/* {
-          root * /srv/static
-          header Cache-Control "public, max-age=31536000, immutable"
-          file_server
-        }
-        handle_path /media/* {
-          root * /srv/media
-          header Cache-Control "public, max-age=86400"
-          header X-Content-Type-Options nosniff
-          file_server
-        }
-        handle {
-          reverse_proxy web:8000
-        }
-        log
+        import /etc/caddy/site.caddy
       }
+  # Shared with docker-compose.tunnel.yaml, which only replaces the Caddyfile above.
+  caddy-site:
+    content: |
+      encode zstd gzip
+      # Several photos (up to 10 MB each) can be uploaded in one form.
+      request_body {
+        max_size 110MB
+      }
+      handle_path /static/* {
+        root * /srv/static
+        header Cache-Control "public, max-age=31536000, immutable"
+        file_server
+      }
+      handle_path /media/* {
+        root * /srv/media
+        header Cache-Control "public, max-age=86400"
+        header X-Content-Type-Options nosniff
+        file_server
+      }
+      handle {
+        reverse_proxy web:8000
+      }
+      log
 
 volumes:
   postgres-data:

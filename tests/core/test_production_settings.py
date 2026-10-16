@@ -107,3 +107,17 @@ def test_required_variables(name):
 def test_allauth_sees_the_client_ip_behind_caddy():
     # Otherwise every visitor shares Caddy's IP and allauth's per-IP rate limits lock out everyone.
     assert production_settings("ALLAUTH_TRUSTED_PROXY_COUNT") == {"ALLAUTH_TRUSTED_PROXY_COUNT": 1}
+
+
+def test_proxy_count_is_configurable_for_a_tunnel_in_front_of_caddy():
+    # Pangolin or Cloudflare Tunnel in front of Caddy adds a second X-Forwarded-For entry.
+    assert production_settings("ALLAUTH_TRUSTED_PROXY_COUNT", TRUSTED_PROXY_COUNT="2") == {
+        "ALLAUTH_TRUSTED_PROXY_COUNT": 2
+    }
+
+
+def test_allowed_hosts_and_csrf_origins_follow_site_url():
+    assert production_settings("ALLOWED_HOSTS", "CSRF_TRUSTED_ORIGINS") == {
+        "ALLOWED_HOSTS": ["volunteer.example.org"],
+        "CSRF_TRUSTED_ORIGINS": ["https://volunteer.example.org"],
+    }

@@ -47,15 +47,29 @@ v2.24 or newer.
 
 ## 4. Get the compose file
 
+The app itself comes from the image (`ghcr.io/tomleo/community-organizer`), which `docker compose` pulls in step 7.
+What you download here are the files that live next to it on the server: the compose file and the two settings
+templates. Take them from the release you'll run, so they match the image (the newest version is the top
+[tag](https://github.com/tomleo/community-organizer/tags) and the top entry in `CHANGELOG.md`):
+
 ```bash
 sudo mkdir -p /opt/community-organizer && sudo chown organizer: /opt/community-organizer
 cd /opt/community-organizer
-curl -fsSLO https://raw.githubusercontent.com/your-org/community-organizer/main/docker-compose.yaml
-curl -fsSL -o .env https://raw.githubusercontent.com/your-org/community-organizer/main/.env.production.example
-curl -fsSL -o backup.env https://raw.githubusercontent.com/your-org/community-organizer/main/backup.env.example
+RELEASE=v0.1.0
+SRC=https://raw.githubusercontent.com/tomleo/community-organizer/$RELEASE
+curl -fsSLO $SRC/docker-compose.yaml
+curl -fsSL -o .env $SRC/.env.production.example
+curl -fsSL -o backup.env $SRC/backup.env.example
 chmod 600 .env backup.env
 mkdir -p brand templates   # optional customizations; create them now so they belong to you, not root
 ```
+
+If a tunnel or proxy such as Pangolin handles HTTPS for this server, see
+[Behind a tunnel or reverse proxy](#behind-a-tunnel-or-reverse-proxy-pangolin-cloudflare-tunnel) first.
+
+`VERSION` in `.env` then picks which images to run (the comment above it explains the choices). To try
+unreleased changes (e.g. on a demo site), use `RELEASE=main` and `VERSION=main`, or `VERSION=sha-<commit>` to stay on
+one build.
 
 ## 5. Configure `.env`
 
@@ -78,6 +92,63 @@ in `.env` (see the Anymail docs for your provider's variable names). Set `ANYMAI
 `someuser:a-long-random-password`. Once the site is running (next step), add a delivery-tracking webhook in the
 provider pointing at `https://someuser:a-long-random-password@volunteer.example.org/anymail/<provider>/tracking/`
 (e.g. `postmark`), and sign up as a test volunteer to check the verification email arrives.
+
+### Choosing a provider
+
+Any provider Anymail supports works. Free tiers as of October 2026 (they change often; check the provider's pricing
+page before signing up):
+
+| Provider | Free tier (emails) | First paid plan | Notes |
+|---|---|---|---|
+| Brevo | ~300/day (~9,000/month) | ~$9–15/month | Largest ongoing free tier; EU-based |
+| Mailjet | ~6,000/month (~200/day) | ~$15/month | |
+| Resend | 3,000/month (100/day) | $20/month for 50,000 | |
+| Mailgun | ~100/day | ~$15/month for 10,000 | |
+| Postmark | 100/month | ~$15/month for 10,000 | Strong deliverability; the free tier is for testing only |
+| Amazon SES | None; new AWS accounts get general AWS credit | $0.10 per 1,000 emails, no monthly fee | Cheapest at volume (10,000 emails ≈ $1); you must request removal from sandbox mode |
+| Mailtrap | Small free tier, plus a test inbox | Low-cost tiers | Test inbox catches mail without delivering it |
+| SendGrid | Trial only | ~$20/month | Anymail no longer tests it |
+
+Non-profit programs (also October 2026; confirm eligibility with the provider):
+
+- **Amazon SES:** through [TechSoup](https://www.techsoup.org/amazon-web-services), US non-profits with budgets
+  under $10 million can get $1,000 of AWS credit a year for a $95 admin fee. That pays for about 10 million emails.
+- **Mailjet:** 20% off the monthly subscription (not annual plans) after you send proof of non-profit status to
+  support.
+- **Brevo:** 15% off the Enterprise plan only, arranged through their sales team.
+- **Resend, Postmark, Mailgun:** no published non-profit discount.
+
+A small organization usually stays within Brevo's or Mailjet's free tier. Every provider asks you to add SPF and
+DKIM DNS records for the sending domain.
+
+### Demo or staging sites
+
+A public demo with open sign-up lets anyone make the site email addresses they don't own, which hurts your
+sending reputation and can get a provider account suspended. Instead, catch all mail with
+[Mailpit](https://mailpit.axllent.org/) so nothing is delivered. Create `docker-compose.override.yaml` next to
+`docker-compose.yaml`:
+
+```yaml
+services:
+  mailpit:
+    image: axllent/mailpit:v1.31
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"  # web UI, reachable only from the server itself
+```
+
+and in `.env` use SMTP instead of Anymail (no `ANYMAIL_*` variables or webhook needed):
+
+```
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=mailpit
+EMAIL_PORT=1025
+EMAIL_USE_TLS=false
+```
+
+Run `docker compose up -d`, then read the caught mail through an SSH tunnel: `ssh -L 8025:localhost:8025
+you@server` and open http://localhost:8025. Don't publish the Mailpit UI on the internet: anyone who can read it can
+read password-reset links and take over accounts, including the admin's.
 
 ## 7. Start the site
 
@@ -133,9 +204,43 @@ The restore asks you to type the domain, then replaces the database and uploaded
   path as the app's templates (e.g. `templates/emails/reminder/body.txt`), then `docker compose up -d`. Web pages,
   workers and the scheduler all read them.
 
+## Behind a tunnel or reverse proxy (Pangolin, Cloudflare Tunnel)
+
+If the server isn't reachable from the internet and a tunnel or proxy handles HTTPS for it, add
+[`docker-compose.tunnel.yaml`](../docker-compose.tunnel.yaml) on top of the stock compose file. With it, Caddy serves
+plain HTTP on one port and keeps the proxy's `X-Forwarded-Proto` and `X-Forwarded-For` headers. Skip opening ports
+80 and 443 in step 2, and in step 4 also download it:
+
+```bash
+curl -fsSLO $SRC/docker-compose.tunnel.yaml
+```
+
+Then in `.env`:
+
+```
+# Load both files for every docker compose command.
+COMPOSE_FILE=docker-compose.yaml:docker-compose.tunnel.yaml
+# The public address, as visitors see it; the allowed host name and trusted origin for forms come from it.
+SITE_URL=https://volunteer.example.org
+# The port the proxy connects to on this server (default 8080).
+HTTP_PORT=4539
+```
+
+Point the proxy at `http://<server address>:4539`. It must pass the original `Host` header on (Pangolin and
+Cloudflare Tunnel do by default).
+
+- **Trusted proxies:** Caddy trusts forwarded headers from any private address. Anyone else on the LAN who can
+  reach the port could fake them, so if you know the proxy's address, put it in place of `private_ranges` in
+  `docker-compose.tunnel.yaml`.
+- **Visitor addresses:** the proxy and Caddy each add an `X-Forwarded-For` entry, so the override sets
+  `TRUSTED_PROXY_COUNT=2` for login rate limits. Change it in `.env` if your chain has more hops.
+- **Other host names:** to also answer on another name (e.g. the server's LAN address), set `ALLOWED_HOSTS` and
+  `CSRF_TRUSTED_ORIGINS` in `.env`, comma-separated and including the public ones.
+
 ## Updating
 
-Read `CHANGELOG.md` for upgrade notes, then:
+Read `CHANGELOG.md` for upgrade notes. If a release changes `docker-compose.yaml` (or `docker-compose.tunnel.yaml`),
+the notes say so; download it again with the new `RELEASE` as in step 4. Then:
 
 ```bash
 cd /opt/community-organizer

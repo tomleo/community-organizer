@@ -44,7 +44,8 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = env_int("SECURE_HSTS_SECONDS", 31536000)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", True)
     # Caddy sets X-Forwarded-For to the visitor's address; allauth rate-limits per visitor IP.
-    ALLAUTH_TRUSTED_PROXY_COUNT = 1
+    # A tunnel in front of Caddy (Pangolin, Cloudflare Tunnel) adds an entry: set 2.
+    ALLAUTH_TRUSTED_PROXY_COUNT = env_int("TRUSTED_PROXY_COUNT", 1)
 
 SILENCED_SYSTEM_CHECKS = [
     # Caddy redirects HTTP to HTTPS; the container healthcheck reaches Django over plain HTTP.
