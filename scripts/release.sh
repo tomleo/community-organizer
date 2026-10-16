@@ -1,47 +1,46 @@
 #!/usr/bin/env bash
-# Build and push a multi-arch release image. See docs/releasing.md.
+# Bump the version and CHANGELOG.md from commit messages, then commit and tag. Pushing the tag makes CI
+# build and publish the image. See docs/releasing.md.
 set -euo pipefail
 
-version="${1:-}"
-if [[ -z "$version" ]]; then
-  echo "Usage: IMAGE=registry/name scripts/release.sh <version>" >&2
-  exit 1
-fi
-if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "The version must look like 1.2.3, got $version." >&2
-  exit 1
-fi
-if [[ -z "${IMAGE:-}" ]]; then
-  echo "Set IMAGE, e.g. IMAGE=ghcr.io/your-org/community-organizer" >&2
-  exit 1
-fi
+increment="${1:-}"
+case "$increment" in
+  "" | major | minor | patch) ;;
+  *)
+    echo "Usage: scripts/release.sh [major|minor|patch]  (default: worked out from commit messages)" >&2
+    exit 1
+    ;;
+esac
 
 cd "$(dirname "$0")/.."
+if [[ "$(git branch --show-current)" != "main" ]]; then
+  echo "Release from main." >&2
+  exit 1
+fi
 if [[ -n "$(git status --porcelain)" ]]; then
   echo "Commit or stash your changes first." >&2
   exit 1
 fi
-project_version=$(uv run python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
-if [[ "$project_version" != "$version" ]]; then
-  echo "pyproject.toml says $project_version; update it (and CHANGELOG.md) first." >&2
-  exit 1
+
+args=(--yes)
+if [[ -n "$increment" ]]; then
+  args+=(--increment "${increment^^}")
 fi
+# Before 1.0.0, breaking changes bump the minor version.
+if [[ "$(uv run cz version --project)" == 0.* ]]; then
+  args+=(--major-version-zero)
+fi
+uv run cz bump "${args[@]}"
+version="$(uv run cz version --project)"
 
-uv run ruff check .
-uv run ruff format --check .
-uv run pytest -q
-
-major="${version%%.*}"
-minor="${version#*.}"
-minor="${minor%%.*}"
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  --build-arg APP_VERSION="$version" \
-  --tag "$IMAGE:$version" \
-  --tag "$IMAGE:$major.$minor" \
-  --tag "$IMAGE:$major" \
-  --tag "$IMAGE:latest" \
-  --push .
-
-git tag -a "v$version" -m "Release $version"
-echo "Pushed $IMAGE:$version. Push the tag with: git push origin v$version"
+if [[ -t 0 ]]; then
+  read -rp "Edit the CHANGELOG.md entry (e.g. to add upgrade notes)? [y/N] " answer
+  if [[ "$answer" == [yY]* ]]; then
+    "${VISUAL:-${EDITOR:-vi}}" CHANGELOG.md
+    if ! git diff --quiet CHANGELOG.md; then
+      git commit --quiet --amend --no-edit CHANGELOG.md
+      git tag --force --annotate "v$version" --message "v$version" >/dev/null
+    fi
+  fi
+fi
+echo "Tagged v$version. Publish it with: git push origin main v$version"

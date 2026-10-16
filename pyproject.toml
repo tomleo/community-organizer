@@ -19,6 +19,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "commitizen>=4.19.2",
     "pytest>=9.1.1",
     "pytest-django>=4.14.0",
     "ruff>=0.17.0",
@@ -38,3 +39,24 @@ extend-exclude = ["**/migrations/**", "docs/**"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "DJ"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "uv"
+version_scheme = "semver2"
+tag_format = "v$version"
+# Lets the changelog parser read "## 1.2.0" headings (the template drops the "v").
+legacy_tag_formats = ["$version"]
+annotated_tag = true
+update_changelog_on_bump = true
+bump_message = "chore: release $new_version"
+template = "scripts/changelog.md.j2"
+# Keep a Changelog section names (https://keepachangelog.com).
+change_type_order = ["Breaking changes", "Added", "Changed", "Fixed"]
+
+[tool.commitizen.change_type_map]
+"BREAKING CHANGE" = "Breaking changes"
+feat = "Added"
+fix = "Fixed"
+refactor = "Changed"
+perf = "Changed"
